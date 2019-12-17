@@ -94,11 +94,23 @@ void draw_logo() {
 }
 
 int snake[300][2]; // snake coordinate array
-int obstacles[100][2];
+int obstacles[100][3]; // dodge obstactles coordinate array
 
+int frog[3][2]; // starts in the middle on the bottom
+int obstacle_size = 3;
 int snake_size = 30; // initialize snake size to 10
+int score = 0;
 
 int apple[2] = {random(11, 309), random(11, 209)};
+
+void compositeCore(void *data)
+{
+  while (true)
+  {
+    //just send the graphics frontbuffer whithout any interruption 
+    composite.sendFrameHalfResolution(&graphics.frame);
+  }
+}
 
 byte prev_state0 = 1, prev_state1 = 1, prev_state2 = 1;
 int button_pressed = 0;
@@ -163,12 +175,9 @@ void setup() {
   // configure LED for output
   pinMode(LED_PIN, OUTPUT);
 
-  snake[0][0] = 64;
-  snake[0][1] = 32;
-  for (int i = 1 ; i < 300 ; i++) {
-    snake[i][0] = 0;
-    snake[i][1] = 0;
-  }
+  
+
+  
 
   //highest clockspeed needed
   rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
@@ -191,6 +200,7 @@ void setup() {
   
   
   graphics.begin(0);
+  
   draw_logo();
 
   // snake option
@@ -203,6 +213,15 @@ void setup() {
     if (prev_state0 == 1 && curr_state == 0) {
       button_pressed = 0;
       prev_state0 = curr_state;
+
+      
+      // initialize snake
+      snake[0][0] = 64;
+      snake[0][1] = 32;
+      for (int i = 1 ; i < 300 ; i++) {
+        snake[i][0] = 0;
+        snake[i][1] = 0;
+      }
       break;
     }
     prev_state0 = curr_state;
@@ -211,22 +230,57 @@ void setup() {
     if (prev_state1 == 1 && curr_state == 0) {
       button_pressed = 1;
       prev_state1 = curr_state;
+
+      // initilize dodger
+      frog[0][0] = 154; // bottom left x
+      frog[0][1] = 210; // bottom left y
+      frog[1][0] = 162; // bottom right x
+      frog[1][1] = 210; // bottom right y
+      frog[2][0] = 158; // top x
+      frog[2][1] = 203; // top y
+
+      // initialize obstacles, obstacle size is 3
+      for (int i = 0 ; i < obstacle_size ; i++) {
+        obstacles[i][0] =  random(0, 300); // x
+        obstacles[i][1] = random(0, 170); // y
+        obstacles[i][2] = random(1, 5); // length/width of box
+        Serial.printf("SETUP | obs x: %i, obs y: %i, obs size: %i\n", obstacles[i][0], obstacles[i][1], obstacles[i][2]);
+      }
+  
       break;
     }
     prev_state1 = curr_state;
+
+    curr_state = digitalRead(BUTTON2);
+    if (prev_state2 == 1 && curr_state == 0) {
+      graphics.begin(0);
+      luni0.draw(graphics, 70, 65);
+      luni0.draw(graphics, 210, 65);
+      
+      draw_logo();
+    
+      // snake option
+      graphics.setCursor(136, 115);
+      graphics.print("0   SNAKE");
+      
+      graphics.end();
+      delay(5000);
+      graphics.begin(0);
+      
+      draw_logo();
+    
+      // snake option
+      graphics.setCursor(136, 115);
+      graphics.print("0   SNAKE");
+      
+      graphics.end();
+    }
     delay(10);
   }
   
 }
 
-void compositeCore(void *data)
-{
-  while (true)
-  {
-    //just send the graphics frontbuffer whithout any interruption 
-    composite.sendFrameHalfResolution(&graphics.frame);
-  }
-}
+
 
 // rolls over any out of bounds coordinate
 void roll_over(int coord[2]) {
@@ -273,7 +327,7 @@ void print_score() {
   graphics.setTextColor(50);
   graphics.setCursor(10,0);
   graphics.print("SCORE: ");
-  graphics.print(snake_size);
+  graphics.print(score);
 }
 
 void game_over_screen() {
@@ -284,7 +338,7 @@ void game_over_screen() {
   graphics.print("GAME OVER");
   graphics.setCursor(138, 100);
   graphics.print("SCORE: ");
-  graphics.print(snake_size);
+  graphics.print(score);
   graphics.setCursor(60, 108);
   graphics.print("PRESS TOP BUTTON TO GO BACK TO TITLE");
   graphics.end();
@@ -374,6 +428,7 @@ void snake_game() {
   if (contact_apple) {
       // grow snake by 20
       snake_size +=20;
+      score = snake_size - 30;
       
       // move apple
       move_apple();
@@ -396,11 +451,87 @@ void snake_game() {
   }
 }
 
-int obstacles[100][2];
+bool is_gameover_dodger() {
+  for (int i = 0; i < obstacle_size ; i++) {
+    if (frog[i][0] >= obstacles[i][0] && frog[i][0] <= obstacles[i][0] + obstacles[i][2]) { // if within the x bounds of an object
+      if (frog[i][1] >= obstacles[i][1] && frog[i][1] <= obstacles[i][1] + obstacles[i][2]) { // if within the y bounds of an object
+        return true;
+      }
+    }   
+  }
+  return false;
+}
+
+// moves the obstacles across the screen.
+void move_obstacles() {
+  
+  for (int i = 0; i< obstacle_size ; i++) {
+    int new_coord[2];
+    new_coord[0] = obstacles[i][0] - 1;
+    new_coord[1] = obstacles[i][1];
+
+    roll_over(new_coord); // rolls over the obstacle if it reaches the left hand side
+    obstacles[i][0] = new_coord[0];
+  }
+}
+
+// if the frog reaches the top of the screen
+bool level_completed() {
+  if (frog[2][1] <= 0) {
+    return true;
+  }
+  return false;
+}
 
 void dodger_game() {
+  // draw player
+  for (int i = 0 ; i < 3 ; i++) {
+    graphics.fillRect(frog[i][0], frog[i][1], 5, 5, WHITE);
+  }
+
+  if (is_gameover_dodger()){
+    game_over_screen();
+    return;
+  }
+
+  if (level_completed()) {
+    
+  }
   
-  setup();
+  
+
+  if (imu_direction != curr_direction) {
+    curr_direction = imu_direction;
+    if(imu_direction == 0) { // left
+      frog[0][0] -= 3; 
+      frog[1][0] -= 3;
+      frog[2][0] -= 3; 
+    } else if (imu_direction == 2) { // right
+      frog[0][0] += 3;
+      frog[1][0] += 3;
+      frog[2][0] += 3;
+    } else if (imu_direction == 3) { // up
+      frog[0][1] -= 3;
+      frog[1][1] -= 3;
+      frog[2][1] -= 3;
+    }
+  } else {
+    if(curr_direction == 0) { // left
+      frog[0][0] -= 3; 
+      frog[1][0] -= 3;
+      frog[2][0] -= 3; 
+    } else if (curr_direction == 2) { // right
+      frog[0][0] += 3;
+      frog[1][0] += 3;
+      frog[2][0] += 3;
+    } else if (curr_direction == 3) { // up
+      frog[0][1] -= 3;
+      frog[1][1] -= 3;
+      frog[2][1] -= 3;
+    }
+  }
+
+  move_obstacles();
 }
 
 void loop() {
@@ -409,7 +540,7 @@ void loop() {
 
   // if programming failed, don't try to do anything
     if (!dmpReady) return;
-    // wait for MPU interrupt or extra packet(s) available
+    // wait for MPU, interrupt or extra packet(s) available
     while (!mpuInterrupt && fifoCount < packetSize) {
         if (mpuInterrupt && fifoCount < packetSize) {
           // try to get out of the infinite loop 
@@ -472,10 +603,9 @@ void loop() {
     }
   // wipe lcd and begin writing to the lcd
   graphics.begin(0);
-
   if (button_pressed == 0) {
     snake_game();
-  } else {
+  } else if(button_pressed == 1) {
     dodger_game();
   }
   
