@@ -73,13 +73,35 @@ Image<CompositeGraphics> luni0(luni::xres, luni::yres, luni::pixels);
 Font<CompositeGraphics> font(6, 8, font6x8::pixels);
 
 
+void draw_logo() {
+  //H
+  graphics.fillRect(125, 70, 5, 29, WHITE);
+  graphics.fillRect(130, 86, 10, 5, WHITE);
+  graphics.fillRect(140, 70, 5, 29, WHITE);
+
+  //T
+  graphics.fillRect(156, 70, 20, 5, WHITE);
+  graphics.fillRect(163, 75, 6, 24, WHITE);
+
+  //3
+  graphics.fillRect(188, 70, 12, 5, WHITE);
+  graphics.fillRect(192, 82, 8, 5, WHITE);
+  graphics.fillRect(188, 94, 12, 5, WHITE);
+  graphics.fillRect(200, 70, 5, 29, WHITE);
+
+  graphics.setCursor(125, 100);
+  graphics.print("HAND TILT 3000");
+}
+
 int snake[300][2]; // snake coordinate array
 
 int snake_size = 30; // initialize snake size to 10
 int high_score = 0;
 
 int apple[2] = {random(11, 309), random(11, 209)};
- 
+
+byte prev_state0 = 1, prev_state1 = 1, prev_state2 = 1;
+int button_pressed = 0;
 void setup() {
 
   // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -161,17 +183,29 @@ void setup() {
   //running composite output pinned to first core
   xTaskCreatePinnedToCore(compositeCore, "c", 1024, NULL, 1, NULL, 0);
   //rendering the actual graphics in the main loop is done on the second core by default
-
-  graphics.begin(0);
   
-//  lcd.begin(SSD1306_SWITCHCAPVCC, 0x3C); // init
-//  lcd.clearDisplay();
-//  lcd.display(); 
-//
   // initialize buttons
   pinMode(BUTTON0, INPUT_PULLUP); 
   pinMode(BUTTON1, INPUT_PULLUP);
   pinMode(BUTTON2, INPUT_PULLUP);
+  
+  
+  graphics.begin(0);
+  draw_logo();
+
+  // snake option
+  graphics.setCursor(136, 115);
+  graphics.print("0   SNAKE");
+  
+  graphics.end();
+  while (1) {
+    byte curr_state = digitalRead(BUTTON0);
+    if (prev_state0 == 1 && curr_state == 0) {
+      break;
+    }
+    prev_state0 = curr_state;
+    delay(10);
+  }
   
 }
 
@@ -237,8 +271,31 @@ void print_score() {
   graphics.print(high_score);
 }
 
-byte prev_state0 = 1, prev_state1 = 1, prev_state2 = 1;
-int button_pressed = 0;
+void game_over_screen() {
+  graphics.begin(0);
+  graphics.end();
+  graphics.begin(0);
+  graphics.setCursor(140, 92);
+  graphics.print("GAME OVER");
+  graphics.setCursor(138, 100);
+  graphics.print("SCORE: ");
+  graphics.print(snake_size);
+  graphics.setCursor(60, 108);
+  graphics.print("PRESS TOP BUTTON TO GO BACK TO TITLE");
+  graphics.end();
+  snake_size = 10;
+  while (1) {
+    byte curr_state = digitalRead(BUTTON0);
+    if (prev_state0 == 1 && curr_state == 0) {
+      break;
+    }
+    prev_state0 = curr_state;
+    delay(10);
+  }
+  setup();
+}
+
+
 int curr_direction = 0; // current direction the snake is going, 0 left 1 down 2 right 3 up
 int imu_direction = 0; // direction read by imu
 float p_curr = 0; // pitch value
@@ -385,28 +442,7 @@ void loop() {
 
   // check if player loses
   if (is_gameover(new_coord)) {
-    
-    graphics.begin(0);
-    graphics.end();
-    graphics.begin(0);
-    graphics.setCursor(140, 92);
-    graphics.print("GAME OVER");
-    graphics.setCursor(138, 100);
-    graphics.print("SCORE: ");
-    graphics.print(snake_size);
-    graphics.setCursor(60, 108);
-    graphics.print("PRESS TOP BUTTON TO GO BACK TO TITLE");
-    graphics.end();
-    snake_size = 10;
-    while (1) {
-      byte curr_state = digitalRead(BUTTON0);
-      if (prev_state0 == 1 && curr_state == 0) {
-        break;
-      }
-      prev_state0 = curr_state;
-      delay(10);
-    }
-    setup();
+    game_over_screen();
     return;
 
     
