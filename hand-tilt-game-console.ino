@@ -94,9 +94,9 @@ void draw_logo() {
 }
 
 int snake[300][2]; // snake coordinate array
+int obstacles[100][2];
 
 int snake_size = 30; // initialize snake size to 10
-int high_score = 0;
 
 int apple[2] = {random(11, 309), random(11, 209)};
 
@@ -201,9 +201,19 @@ void setup() {
   while (1) {
     byte curr_state = digitalRead(BUTTON0);
     if (prev_state0 == 1 && curr_state == 0) {
+      button_pressed = 0;
+      prev_state0 = curr_state;
       break;
     }
     prev_state0 = curr_state;
+
+    curr_state = digitalRead(BUTTON1);
+    if (prev_state1 == 1 && curr_state == 0) {
+      button_pressed = 1;
+      prev_state1 = curr_state;
+      break;
+    }
+    prev_state1 = curr_state;
     delay(10);
   }
   
@@ -221,15 +231,15 @@ void compositeCore(void *data)
 // rolls over any out of bounds coordinate
 void roll_over(int coord[2]) {
 
-  if (coord[0] >= 320) {
+  if (coord[0] >= 315) {
     coord[0] = 0;
   } else if (coord[0] < 0) {
-    coord[0] = 319;
+    coord[0] = 314;
   }
-  if (coord [1] >= 220) {
+  if (coord [1] >= 215) {
     coord[1] = 0;
   } else if (coord[1] < 0) {
-    coord[1] = 219;
+    coord[1] = 214;
   }
 }
 
@@ -242,7 +252,7 @@ void move_apple() {
 }
 
 bool hits_apple(int coord[2]) {
-  return (coord[0] >= apple[0] && coord[0] <= apple[0]+10) && (coord[1] >= apple[1] && coord[1] <= apple[1]+10);
+  return (coord[0]+2 >= apple[0] && coord[0]-2 <= apple[0]+10) && (coord[1]+2 >= apple[1] && coord[1]-2 <= apple[1]+10);
 }
 
 
@@ -264,11 +274,6 @@ void print_score() {
   graphics.setCursor(10,0);
   graphics.print("SCORE: ");
   graphics.print(snake_size);
-
-  // print high score
-  graphics.setCursor(10, 10);
-  graphics.print("HIGH SCORE: ");
-  graphics.print(high_score);
 }
 
 void game_over_screen() {
@@ -310,6 +315,92 @@ void direc_deter(float p,float r){
    if(p >=  30 && r < 30 && r > -30){imu_direction = 3;} // up
    if(r <= -30 && p < 30 && p > -30){imu_direction = 0;} //left
    if(r >=  30 && p < 30 && p > -30){imu_direction = 2;} // right
+}
+
+void snake_game() {
+  // draw apple
+  graphics.fillRect(apple[0], apple[1], 10, 10, WHITE); 
+  
+  int new_coord[2]; // the new coordinate for the head of the snake
+  if (imu_direction != curr_direction) { // change direction
+    curr_direction = imu_direction;
+    if(imu_direction == 0) { // left
+      new_coord[0] = snake[0][0] - 1;
+      new_coord[1] = snake[0][1]; 
+    } else if (imu_direction == 1) { // down
+      new_coord[0] = snake[0][0];
+      new_coord[1] = snake[0][1] + 1;
+    } else if (imu_direction == 2) { // right
+      new_coord[0] = snake[0][0] + 1;
+      new_coord[1] = snake[0][1];
+    } else if (imu_direction == 3) { // up
+      new_coord[0] = snake[0][0];
+      new_coord[1] = snake[0][1] - 1;
+    }
+  } else { // keep going in the current direction
+    if (curr_direction == 0) { // left
+      new_coord[0] = snake[0][0] - 1;
+      new_coord[1] = snake[0][1]; 
+    } else if (curr_direction == 1) { // down
+      new_coord[0] = snake[0][0];
+      new_coord[1] = snake[0][1] + 1;
+    } else if (curr_direction == 2) { // right
+      new_coord[0] = snake[0][0] + 1;
+      new_coord[1] = snake[0][1];
+    } else if (curr_direction == 3) { // up
+      new_coord[0] = snake[0][0];
+      new_coord[1] = snake[0][1] - 1;
+    }
+  }
+
+  // check if player loses
+  if (is_gameover(new_coord)) {
+    game_over_screen();
+    return;
+  }
+  
+  //print score
+  print_score();
+
+  bool contact_apple = hits_apple(new_coord);
+  if (!contact_apple) { // if the head didn't hit the apple, check the rest of the snake
+    for (int i = snake_size -2 ; i >= 0 ; i--) {
+      if (hits_apple(snake[i])) {
+        contact_apple = true;
+      }
+    }
+  }
+
+  if (contact_apple) {
+      // grow snake by 20
+      snake_size +=20;
+      
+      // move apple
+      move_apple();
+      graphics.fillRect(apple[0], apple[1], 10, 10, WHITE);
+  }
+  
+  roll_over(new_coord);
+  
+  //shift snake
+  for (int i = snake_size-1; i > -1 ; i--) {
+    snake[i][0] = snake[i-1][0];
+    snake[i][1] = snake[i-1][1];
+  }
+  snake[0][0] = new_coord[0];
+  snake[0][1] = new_coord[1];
+
+  //draw snake
+  for (int i = 0 ; i < snake_size ; i++) {
+    graphics.fillRect(snake[i][0], snake[i][1], 5, 5, WHITE);
+  }
+}
+
+int obstacles[100][2];
+
+void dodger_game() {
+  
+  setup();
 }
 
 void loop() {
@@ -381,107 +472,13 @@ void loop() {
     }
   // wipe lcd and begin writing to the lcd
   graphics.begin(0);
-  
-  // draw apple
-  graphics.fillRect(apple[0], apple[1], 10, 10, WHITE); 
 
-//  // check if button 0 is pressed
-//  byte curr_state = digitalRead(BUTTON0);
-//  if (prev_state0 == 1 && curr_state == 0) {
-//    button_pressed = 0;
-//  }
-//  prev_state0 = curr_state;
-//
-//  // check if button 1 is pressed
-//  curr_state = digitalRead(BUTTON1);
-//  if (prev_state1 == 1 && curr_state == 0) {
-//    button_pressed = 1;
-//  }
-//  prev_state1 = curr_state;
-//
-//  // check if button 2 is pressed
-//  curr_state = digitalRead(BUTTON2);
-//  if (prev_state2 == 1 && curr_state == 0) {
-//    button_pressed = 2;
-//  }
-//  prev_state1 = curr_state;
-
-  
-  int new_coord[2]; // the new coordinate for the head of the snake
-  if (imu_direction != curr_direction) {
-    //redraw snake 
-    curr_direction = imu_direction;
-    if(imu_direction == 0) { // left
-      new_coord[0] = snake[0][0] - 1;
-      new_coord[1] = snake[0][1]; 
-    } else if (imu_direction == 1) { // down
-      new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] + 1;
-    } else if (imu_direction == 2) { // right
-      new_coord[0] = snake[0][0] + 1;
-      new_coord[1] = snake[0][1];
-    } else if (imu_direction == 3) { // up
-      new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] - 1;
-    }
-  } else { // keep going in the current direction
-    if (curr_direction == 0) { // left
-      new_coord[0] = snake[0][0] - 1;
-      new_coord[1] = snake[0][1]; 
-    } else if (curr_direction == 1) { // down
-      new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] + 1;
-    } else if (curr_direction == 2) { // right
-      new_coord[0] = snake[0][0] + 1;
-      new_coord[1] = snake[0][1];
-    } else if (curr_direction == 3) { // up
-      new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] - 1;
-    }
-  }
-
-  // check if player loses
-  if (is_gameover(new_coord)) {
-    game_over_screen();
-    return;
-
-    
+  if (button_pressed == 0) {
+    snake_game();
+  } else {
+    dodger_game();
   }
   
-  //print score
-  print_score();
-
   
-  // check if player hits apple >>>> also should make adjustment to count apple as being hit if it spawns on part of the already existing snake
-  if (hits_apple(new_coord)) {
-
-    // grow snake by 20
-    snake_size +=20;
-
-    // update high score if current score > high score
-    if (snake_size > high_score) {
-      high_score = snake_size;
-    }
-    
-    // move apple
-    move_apple();
-    graphics.fillRect(apple[0], apple[1], 10, 10, WHITE);
-  }
-  
-  roll_over(new_coord);
-  
-  //shift snake
-  for (int i = snake_size-1; i > -1 ; i--) {
-    snake[i][0] = snake[i-1][0];
-    snake[i][1] = snake[i-1][1];
-  }
-  snake[0][0] = new_coord[0];
-  snake[0][1] = new_coord[1];
-
-  //draw snake
-  for (int i = 0 ; i < snake_size ; i++) {
-    //graphics.dotFast(snake[i][0], snake[i][1], WHITE);
-    graphics.fillRect(snake[i][0], snake[i][1], 5, 5, WHITE);
-  }
   graphics.end();
 }
