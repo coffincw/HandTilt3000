@@ -12,6 +12,7 @@
 
 //colors
 #define WHITE 50
+#define GRAY 30
 #define BLACK 0
 
 //#include <Adafruit_SSD1306.h>
@@ -243,7 +244,7 @@ void setup() {
       for (int i = 0 ; i < obstacle_size ; i++) {
         obstacles[i][0] =  random(0, 300); // x
         obstacles[i][1] = random(0, 170); // y
-        obstacles[i][2] = random(1, 5); // length/width of box
+        obstacles[i][2] = random(5, 10); // length/width of box
         Serial.printf("SETUP | obs x: %i, obs y: %i, obs size: %i\n", obstacles[i][0], obstacles[i][1], obstacles[i][2]);
       }
   
@@ -302,7 +303,6 @@ void roll_over(int coord[2]) {
 void move_apple() {
   apple[0] = random(11, 309);
   apple[1] = random(11, 209);
-  //apple = {random(0, 124), random(0, 60)};
 }
 
 bool hits_apple(int coord[2]) {
@@ -451,13 +451,23 @@ void snake_game() {
   }
 }
 
+int frog_coord[75][2];
+
 bool is_gameover_dodger() {
   for (int i = 0; i < obstacle_size ; i++) {
-    if (frog[i][0] >= obstacles[i][0] && frog[i][0] <= obstacles[i][0] + obstacles[i][2]) { // if within the x bounds of an object
-      if (frog[i][1] >= obstacles[i][1] && frog[i][1] <= obstacles[i][1] + obstacles[i][2]) { // if within the y bounds of an object
-        return true;
+    for (int j = 0 ; j < 3 ; j++) {
+      for (int x = 0; x < 5 ; x++) {
+        for (int y = 0; y < 5; y++) {
+          if (frog[j][0] + x >= obstacles[i][0] && frog[j][0] + x <= obstacles[i][0] + obstacles[i][2]) { // if within the x bounds of an object
+            if (frog[j][1] + y >= obstacles[i][1] && frog[j][1] + y <= obstacles[i][1] + obstacles[i][2]) { // if within the y bounds of an object
+              Serial.printf("top box xy: (%i-%i, %i-%i), left box xy: (%i-%i, %i-%i), right box: (%i-%i, %i-%i)\n", frog[2][0], frog[2][0]+4, frog[2][1], frog[2][1]+4, frog[0][0], frog[0][0]+4, frog[0][1], frog[0][1]+4, frog[1][0], frog[1][0]+4, frog[1][1], frog[1][1]+4);
+              Serial.printf("obstacle xy: (%i, %i), obstacle size: %i\n", obstacles[i][0], obstacles[i][1], obstacles[i][2]);
+              return true;
+            }
+          } 
+        }  
       }
-    }   
+    }
   }
   return false;
 }
@@ -483,10 +493,30 @@ bool level_completed() {
   return false;
 }
 
+bool border_check(int coord[2]) {
+  if (coord[0] >= 315) { // right
+    coord[0] -= 1;
+    return true;
+  } else if (coord[0] <= 5) { // left 
+    coord[0] += 1;
+    return true;
+  }
+  if (coord[1] >= 215) { // bottom
+    coord[1] -= 1;
+    return true;
+  }
+  return false;
+}
+
 void dodger_game() {
   // draw player
   for (int i = 0 ; i < 3 ; i++) {
     graphics.fillRect(frog[i][0], frog[i][1], 5, 5, WHITE);
+  }
+
+  // draw obstacles
+  for (int i = 0 ; i < obstacle_size ; i ++) {
+    graphics.fillRect(obstacles[i][0], obstacles[i][1], obstacles[i][2], obstacles[i][2], GRAY);
   }
 
   if (is_gameover_dodger()){
@@ -503,31 +533,53 @@ void dodger_game() {
   if (imu_direction != curr_direction) {
     curr_direction = imu_direction;
     if(imu_direction == 0) { // left
-      frog[0][0] -= 3; 
-      frog[1][0] -= 3;
-      frog[2][0] -= 3; 
+      frog[0][0] -= 1;
+      if (!border_check(frog[0])) {
+        frog[1][0] -= 1;
+        frog[2][0] -= 1; 
+      }
+      
     } else if (imu_direction == 2) { // right
-      frog[0][0] += 3;
-      frog[1][0] += 3;
-      frog[2][0] += 3;
+      frog[1][0] += 1;
+      if (!border_check(frog[1])) {
+        frog[0][0] += 1;
+        frog[2][0] += 1;
+      }
     } else if (imu_direction == 3) { // up
-      frog[0][1] -= 3;
-      frog[1][1] -= 3;
-      frog[2][1] -= 3;
+      frog[0][1] -= 1;
+      frog[1][1] -= 1;
+      frog[2][1] -= 1;
+    } else if (imu_direction == 1) { // down
+      frog[1][1] += 1;
+      if (!border_check(frog[1])) {
+        frog[0][1] += 1;
+        frog[2][1] += 1;
+      }
+      
     }
   } else {
     if(curr_direction == 0) { // left
-      frog[0][0] -= 3; 
-      frog[1][0] -= 3;
-      frog[2][0] -= 3; 
+      frog[0][0] -= 1;
+      if (!border_check(frog[0])) {
+        frog[1][0] -= 1;
+        frog[2][0] -= 1; 
+      }
     } else if (curr_direction == 2) { // right
-      frog[0][0] += 3;
-      frog[1][0] += 3;
-      frog[2][0] += 3;
+      frog[1][0] += 1;
+      if (!border_check(frog[1])) {
+        frog[0][0] += 1;
+        frog[2][0] += 1;
+      }
     } else if (curr_direction == 3) { // up
-      frog[0][1] -= 3;
-      frog[1][1] -= 3;
-      frog[2][1] -= 3;
+      frog[0][1] -= 1;
+      frog[1][1] -= 1;
+      frog[2][1] -= 1;
+    } else if (curr_direction == 1) { // down
+      frog[1][1] += 1;
+      if (!border_check(frog[1])) {
+        frog[0][1] += 1;
+        frog[2][1] += 1;
+      }
     }
   }
 
@@ -540,13 +592,6 @@ void loop() {
 
   // if programming failed, don't try to do anything
     if (!dmpReady) return;
-    // wait for MPU, interrupt or extra packet(s) available
-    while (!mpuInterrupt && fifoCount < packetSize) {
-        if (mpuInterrupt && fifoCount < packetSize) {
-          // try to get out of the infinite loop 
-          fifoCount = mpu.getFIFOCount();
-        }  
-    }
     // reset interrupt flag and get INT_STATUS byte
     mpuInterrupt = false;
     mpuIntStatus = mpu.getIntStatus();
