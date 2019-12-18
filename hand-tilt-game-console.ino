@@ -4,6 +4,14 @@
 
 #include "CompositeVideo/luni.h"
 #include "CompositeVideo/viper.h"
+#include "CompositeVideo/viper_transparent1.h"
+#include "CompositeVideo/viper_transparent2.h"
+#include "CompositeVideo/viper_transparent3.h"
+#include "CompositeVideo/viper_transparent4.h"
+#include "CompositeVideo/viper_transparent5.h"
+#include "CompositeVideo/viper_transparent6.h"
+#include "CompositeVideo/viper_transparent7.h"
+#include "CompositeVideo/viper_transparent8.h"
 #include "CompositeVideo/font6x8.h"
 
 #include <soc/rtc.h>
@@ -74,40 +82,81 @@ Image<CompositeGraphics> luni0(luni::xres, luni::yres, luni::pixels);
 
 // viper picture
 Image<CompositeGraphics> viper0(viper::xres, viper::yres, viper::pixels);
+Image<CompositeGraphics> viper1(viper_transparent1::xres, viper_transparent1::yres, viper_transparent1::pixels);
+Image<CompositeGraphics> viper2(viper_transparent2::xres, viper_transparent2::yres, viper_transparent2::pixels);
+Image<CompositeGraphics> viper3(viper_transparent3::xres, viper_transparent3::yres, viper_transparent3::pixels);
+Image<CompositeGraphics> viper4(viper_transparent4::xres, viper_transparent4::yres, viper_transparent4::pixels);
+Image<CompositeGraphics> viper5(viper_transparent5::xres, viper_transparent5::yres, viper_transparent5::pixels);
+Image<CompositeGraphics> viper6(viper_transparent6::xres, viper_transparent6::yres, viper_transparent6::pixels);
+Image<CompositeGraphics> viper7(viper_transparent7::xres, viper_transparent7::yres, viper_transparent7::pixels);
+Image<CompositeGraphics> viper8(viper_transparent8::xres, viper_transparent8::yres, viper_transparent8::pixels);
 
 //font is based on ASCII starting from char 32 (space), width end height of the monospace characters. 
 //All characters are staored in an image vertically. Value 0 is background.
 Font<CompositeGraphics> font(6, 8, font6x8::pixels);
 
 
-void draw_logo() {
+void draw_logo(int color) {
   //H
-  graphics.fillRect(125, 70, 5, 29, WHITE);
-  graphics.fillRect(130, 86, 10, 5, WHITE);
-  graphics.fillRect(140, 70, 5, 29, WHITE);
+  graphics.fillRect(125, 70, 5, 29, color);
+  graphics.fillRect(130, 86, 10, 5, color);
+  graphics.fillRect(140, 70, 5, 29, color);
 
   //T
-  graphics.fillRect(156, 70, 20, 5, WHITE);
-  graphics.fillRect(163, 75, 6, 24, WHITE);
+  graphics.fillRect(156, 70, 20, 5, color);
+  graphics.fillRect(163, 75, 6, 24, color);
 
   //3
-  graphics.fillRect(188, 70, 12, 5, WHITE);
-  graphics.fillRect(192, 82, 8, 5, WHITE);
-  graphics.fillRect(188, 94, 12, 5, WHITE);
-  graphics.fillRect(200, 70, 5, 29, WHITE);
+  graphics.fillRect(188, 70, 12, 5, color);
+  graphics.fillRect(192, 82, 8, 5, color);
+  graphics.fillRect(188, 94, 12, 5, color);
+  graphics.fillRect(200, 70, 5, 29, color);
 
+  graphics.setTextColor(color);
   graphics.setCursor(125, 100);
   graphics.print("HAND TILT 3000");
+  graphics.setTextColor(WHITE);
 }
 
-void title_screen() {
-  draw_logo();
-    
-  // snake option
+void title_screen(int color) {
+  draw_logo(color);
+
+  graphics.setTextColor(color);
+  
+  // game options
   graphics.setCursor(136, 115);
   graphics.print("0   SNAKE");
   graphics.setCursor(136, 125);
   graphics.print("1   DODGER");
+
+  graphics.setTextColor(WHITE);
+}
+
+void fade_out_title_screen() {
+  for (int i = WHITE ; i > 0 ; i = floor(i/1.5)) {
+    graphics.begin(BLACK);
+    title_screen(i);
+    graphics.end();
+    delay(50);
+    Serial.printf("fade out color %i\n", i);
+  }
+  graphics.begin(0);
+  graphics.end();
+  delay(50);
+}
+
+void fade_in_title_screen() {
+  delay(50);
+  for(int i = 2; i < WHITE ; i *=1.5) {
+    graphics.begin(BLACK);
+    title_screen(i);
+    graphics.end();
+    delay(50);
+  }
+  graphics.begin(BLACK);
+  title_screen(WHITE);
+  graphics.end();
+  delay(50);
 }
 
 int snake[300][2]; // snake coordinate array
@@ -139,8 +188,9 @@ void reset_frog() {
   frog[2][1] = STARTING_FROG_TOP_Y; // top y
 }
 
-void show_difficulty_screen() {
-  graphics.begin(0);
+void show_difficulty_screen(int color) {
+  
+  graphics.setTextColor(color);
   graphics.setCursor(136, 100);
   graphics.print("DIFFICULTY");
   graphics.setCursor(136, 115);
@@ -150,8 +200,76 @@ void show_difficulty_screen() {
   graphics.setCursor(136, 135);
   graphics.print("2   HARD");
 
+  graphics.setTextColor(WHITE);
+}
+
+void fade_in_difficulty_screen() {
+  delay(50);
+  int index = 0;
+  for (int i = 2 ; i < WHITE ; i *=2) {
+    graphics.begin(0);
+    show_difficulty_screen(i);
+    if (index == 1) {
+      viper1.draw(graphics, 133, 25);
+    } else if (index == 2) {
+      viper2.draw(graphics, 133, 25);
+    } else if (index == 3) {
+      viper3.draw(graphics, 133, 25);
+    } else if (index == 4) {
+      viper4.draw(graphics, 133, 25);
+    } else if (index == 5) {
+      viper5.draw(graphics, 133, 25);
+    } else if (index == 6) {
+      viper6.draw(graphics, 133, 25);
+    } else if (index == 7) {
+      viper7.draw(graphics, 133, 25);
+    } else if (index == 8) {
+      viper8.draw(graphics, 133, 25);
+    }
+    index++;
+    graphics.end();
+    delay(50);
+  }
+  graphics.begin(0);
+  show_difficulty_screen(WHITE);
   viper0.draw(graphics, 133, 25);
   graphics.end();
+  delay(50);
+}
+
+void fade_out_difficulty_screen() {
+//  int index = 9;
+  graphics.begin(0);
+  graphics.end();
+  for (int i = WHITE ; i > 0 ; i = floor(i/1.5)) {
+    graphics.begin(0);
+    show_difficulty_screen(i);
+//    if (index == 9) {
+//      viper0.draw(graphics, 133, 25);
+//    } else if (index == 8) {
+//      viper8.draw(graphics, 133, 25);
+//    } else if (index == 7) {
+//      viper7.draw(graphics, 133, 25);
+//    } else if (index == 6) {
+//      viper6.draw(graphics, 133, 25);
+//    } else if (index == 5) {
+//      viper5.draw(graphics, 133, 25);
+//    } else if (index == 4) {
+//      viper4.draw(graphics, 133, 25);
+//    } else if (index == 3) {
+//      viper3.draw(graphics, 133, 25);
+//    } else if (index == 2) {
+//      viper2.draw(graphics, 133, 25);
+//    } else if (index == 1) {
+//      viper1.draw(graphics, 133, 25);
+//    }
+//    index--;
+    graphics.end();
+    delay(50);
+  }
+  graphics.begin(0);
+  graphics.end();
+  delay(50);
 }
 
 byte prev_state0 = 1, prev_state1 = 1, prev_state2 = 1;
@@ -240,12 +358,12 @@ void setup() {
   pinMode(BUTTON1, INPUT_PULLUP);
   pinMode(BUTTON2, INPUT_PULLUP);
   
+  graphics.setTextColor(WHITE);
+  // wait for a second after turning on before fading in the title screen
+  delay(1000);
   
-  graphics.begin(BLACK);
+  fade_in_title_screen();
   
-  title_screen();
-  
-  graphics.end();
   while (1) {
     byte curr_state = digitalRead(BUTTON0);
     if (prev_state0 == 1 && curr_state == 0) {
@@ -256,20 +374,21 @@ void setup() {
       snake[0][0] = 64;
       snake[0][1] = 32;
       for (int i = 1 ; i < 300 ; i++) {
-        snake[i][0] = 0;
-        snake[i][1] = 0;
+        snake[i][0] = -10;
+        snake[i][1] = -10;
       }
       
-      // to prevent button debouncing
-      delay(100);
-
-      show_difficulty_screen();
+      fade_out_title_screen();
+      
+      fade_in_difficulty_screen();
 
       while (1) {
         byte curr_state = digitalRead(BUTTON0);
         if (prev_state0 == 1 && curr_state == 0) {
           difficulty = 1;
           prev_state0 = curr_state;
+          fade_out_difficulty_screen();
+          Serial.println("test1");
           break;
         }
         prev_state0 = curr_state;
@@ -278,6 +397,7 @@ void setup() {
         if (prev_state1 == 1 && curr_state == 0) {
           difficulty = 2;
           prev_state1 = curr_state;
+          fade_out_difficulty_screen();
           break;
         }
         prev_state1 = curr_state;
@@ -286,11 +406,13 @@ void setup() {
         if (prev_state2 == 1 && curr_state == 0) {
           difficulty = 3;
           prev_state2 = curr_state;
+          fade_out_difficulty_screen();
           break;
         }
         prev_state2 = curr_state;
         
       }
+      Serial.println("test2");
       break;
     }
     prev_state0 = curr_state;
@@ -309,7 +431,7 @@ void setup() {
         obstacles[i][1] = random(0, 170); // y
         obstacles[i][2] = random(10, 20); // length/width of box
       }
-  
+      fade_out_title_screen();
       break;
     }
     prev_state1 = curr_state;
@@ -320,18 +442,19 @@ void setup() {
       luni0.draw(graphics, 70, 65);
       luni0.draw(graphics, 210, 65);
       
-      title_screen();
+      title_screen(WHITE);
       
       graphics.end();
       delay(5000);
       graphics.begin(BLACK);
       
-      title_screen();
+      title_screen(WHITE);
       
       graphics.end();
     }
     delay(10);
   }
+  
   
 }
 
@@ -378,16 +501,12 @@ bool is_gameover(int coord[2]) {
 void print_score() {
 
   // print current score
-  graphics.setTextColor(50);
   graphics.setCursor(10,0);
   graphics.print("SCORE: ");
   graphics.print(score);
 }
 
 void game_over_screen() {
-  graphics.begin(BLACK);
-  graphics.end();
-  graphics.begin(BLACK);
   graphics.setCursor(140, 92);
   graphics.print("GAME OVER");
   graphics.setCursor(138, 100);
@@ -463,6 +582,41 @@ void snake_game() {
 
   // check if player loses
   if (is_gameover(new_coord)) {
+    
+    // flash snake
+    for (int i = 0 ; i < 5 ; i++ ) {
+      graphics.begin(0);
+      for (int j = 0 ; j < snake_size ; j++) {
+        graphics.fillRect(snake[j][0], snake[j][1], 5, 5, BLACK);
+      }
+      graphics.end();
+      delay(50);
+      graphics.begin(0);
+      for (int j = 0 ; j < snake_size ; j++) {
+        graphics.fillRect(snake[j][0], snake[j][1], 5, 5, WHITE);
+      }
+      graphics.end();
+      delay(50);
+    }
+
+    //fade snake and apple to half
+    int i;
+    for (i = WHITE ; i > WHITE/2.5 ; i = floor(i/1.5)) {
+      graphics.begin(0);
+      graphics.fillRect(apple[0], apple[1], 10, 10, i); 
+      for (int j = 0 ; j < snake_size ; j++) {
+        graphics.fillRect(snake[j][0], snake[j][1], 5, 5, i);
+      }
+      graphics.end();
+      delay(50);
+    }
+    graphics.begin(0);
+    graphics.fillRect(apple[0], apple[1], 10, 10, i); 
+    for (int j = 0 ; j < snake_size ; j++) {
+      graphics.fillRect(snake[j][0], snake[j][1], 5, 5, i);
+    }
+    
+    
     game_over_screen();
     return;
   }
@@ -482,12 +636,16 @@ void snake_game() {
   if (contact_apple) {
       // grow snake by 20
       snake_size +=20;
+      
+      // increment score
       score = snake_size - 30;
+      
       
       // move apple
       move_apple();
-      graphics.fillRect(apple[0], apple[1], 10, 10, WHITE);
   }
+
+  
   
   roll_over(new_coord);
   
@@ -499,6 +657,8 @@ void snake_game() {
   snake[0][0] = new_coord[0];
   snake[0][1] = new_coord[1];
 
+  
+  
   //draw snake
   for (int i = 0 ; i < snake_size ; i++) {
     graphics.fillRect(snake[i][0], snake[i][1], 5, 5, WHITE);
@@ -544,16 +704,17 @@ bool level_completed() {
   return false;
 }
 
+// prevent frog from leaving screen
 bool border_check(int coord[2]) {
   if (coord[0] >= 315) { // right
-    coord[0] -= 1;
+    coord[0] -= 2;
     return true;
   } else if (coord[0] <= 5) { // left 
-    coord[0] += 1;
+    coord[0] += 2;
     return true;
   }
   if (coord[1] >= 215) { // bottom
-    coord[1] -= 1;
+    coord[1] -= 2;
     return true;
   }
   return false;
@@ -575,6 +736,48 @@ void dodger_game() {
   }
 
   if (is_gameover_dodger()){
+    // flash frog
+    for (int i = 0 ; i < 5 ; i++ ) {
+      graphics.begin(0);
+      for (int j = 0 ; j < obstacle_size ; j ++) {
+        graphics.fillRect(obstacles[j][0], obstacles[j][1], obstacles[j][2], obstacles[j][2], GRAY);
+      }
+      for (int i = 0 ; i < 3 ; i++) {
+        graphics.fillRect(frog[i][0], frog[i][1], 5, 5, BLACK);
+      }
+      graphics.end();
+      delay(50);
+      graphics.begin(0);
+      for (int j = 0 ; j < obstacle_size ; j ++) {
+        graphics.fillRect(obstacles[j][0], obstacles[j][1], obstacles[j][2], obstacles[j][2], GRAY);
+      }
+      for (int i = 0 ; i < 3 ; i++) {
+        graphics.fillRect(frog[i][0], frog[i][1], 5, 5, WHITE);
+      }
+      graphics.end();
+      delay(50);
+    }
+
+    //fade snake and apple to half
+    int i;
+    for (i = GRAY ; i > GRAY/2.5 ; i = floor(i/1.5)) {
+      graphics.begin(0);
+      for (int j = 0 ; j < obstacle_size ; j ++) {
+        graphics.fillRect(obstacles[j][0], obstacles[j][1], obstacles[j][2], obstacles[j][2], i);
+      }
+      for (int j = 0 ; j < 3 ; j++) {
+        graphics.fillRect(frog[j][0], frog[j][1], 5, 5, i);
+      }
+      graphics.end();
+      delay(50);
+    }
+    graphics.begin(0);
+    for (int j = 0 ; j < obstacle_size ; j ++) {
+        graphics.fillRect(obstacles[j][0], obstacles[j][1], obstacles[j][2], obstacles[j][2], i);
+    }
+    for (int j = 0 ; j < 3 ; j++) {
+      graphics.fillRect(frog[j][0], frog[j][1], 5, 5, i);
+    }
     game_over_screen();
     return;
   }
