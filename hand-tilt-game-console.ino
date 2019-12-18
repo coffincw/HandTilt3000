@@ -1,25 +1,28 @@
-
-
 #include "CompositeVideo/CompositeGraphics.h"
 #include "CompositeVideo/Image.h"
 #include "CompositeVideo/CompositeOutput.h"
 
 #include "CompositeVideo/luni.h"
+#include "CompositeVideo/viper.h"
 #include "CompositeVideo/font6x8.h"
-
 
 #include <soc/rtc.h>
 
 //colors
 #define WHITE 50
 #define GRAY 30
-#define BLACK 0
+#define BLACK 255
 
-//#include <Adafruit_SSD1306.h>
+#define STARTING_FROG_TOP_X 158
+#define STARTING_FROG_TOP_Y 203
+#define STARTING_FROG_LEFT_X 154
+#define STARTING_FROG_LEFT_Y 210
+#define STARTING_FROG_RIGHT_X 162
+#define STARTING_FROG_RIGHT_Y 210
+
 #define BUTTON0 34
 #define BUTTON1 0
 #define BUTTON2 35
-//Adafruit_SSD1306 lcd(128, 64); // create display object
 
 #include "IMU/I2Cdev.h"
 #include "IMU/MPU6050_6Axis_MotionApps20.h"
@@ -69,6 +72,9 @@ CompositeOutput composite(CompositeOutput::NTSC, XRES * 2, YRES * 2);
 //image and font from the included headers created by the converter. Each iamge uses its own namespace.
 Image<CompositeGraphics> luni0(luni::xres, luni::yres, luni::pixels);
 
+// viper picture
+Image<CompositeGraphics> viper0(viper::xres, viper::yres, viper::pixels);
+
 //font is based on ASCII starting from char 32 (space), width end height of the monospace characters. 
 //All characters are staored in an image vertically. Value 0 is background.
 Font<CompositeGraphics> font(6, 8, font6x8::pixels);
@@ -101,6 +107,7 @@ int frog[3][2]; // starts in the middle on the bottom
 int obstacle_size = 3;
 int snake_size = 30; // initialize snake size to 10
 int score = 0;
+int difficulty = 0;
 
 int apple[2] = {random(11, 309), random(11, 209)};
 
@@ -111,6 +118,30 @@ void compositeCore(void *data)
     //just send the graphics frontbuffer whithout any interruption 
     composite.sendFrameHalfResolution(&graphics.frame);
   }
+}
+
+void reset_frog() {
+  frog[0][0] = STARTING_FROG_LEFT_X; // bottom left x
+  frog[0][1] = STARTING_FROG_LEFT_Y; // bottom left y
+  frog[1][0] = STARTING_FROG_RIGHT_X; // bottom right x
+  frog[1][1] = STARTING_FROG_RIGHT_Y; // bottom right y
+  frog[2][0] = STARTING_FROG_TOP_X; // top x
+  frog[2][1] = STARTING_FROG_TOP_Y; // top y
+}
+
+void show_difficulty_screen() {
+  graphics.begin(0);
+  graphics.setCursor(136, 100);
+  graphics.print("DIFFICULTY");
+  graphics.setCursor(136, 115);
+  graphics.print("0   EASY");
+  graphics.setCursor(136, 125);
+  graphics.print("1   MEDIUM");
+  graphics.setCursor(136, 135);
+  graphics.print("2   HARD");
+
+  viper0.draw(graphics, 133, 25);
+  graphics.end();
 }
 
 byte prev_state0 = 1, prev_state1 = 1, prev_state2 = 1;
@@ -200,13 +231,15 @@ void setup() {
   pinMode(BUTTON2, INPUT_PULLUP);
   
   
-  graphics.begin(0);
+  graphics.begin(BLACK);
   
   draw_logo();
 
   // snake option
   graphics.setCursor(136, 115);
   graphics.print("0   SNAKE");
+  graphics.setCursor(136, 125);
+  graphics.print("1   DODGER");
   
   graphics.end();
   while (1) {
@@ -214,14 +247,45 @@ void setup() {
     if (prev_state0 == 1 && curr_state == 0) {
       button_pressed = 0;
       prev_state0 = curr_state;
-
-      
+  
       // initialize snake
       snake[0][0] = 64;
       snake[0][1] = 32;
       for (int i = 1 ; i < 300 ; i++) {
         snake[i][0] = 0;
         snake[i][1] = 0;
+      }
+      
+      // to prevent button debouncing
+      delay(100);
+
+      show_difficulty_screen();
+
+      while (1) {
+        byte curr_state = digitalRead(BUTTON0);
+        if (prev_state0 == 1 && curr_state == 0) {
+          difficulty = 1;
+          prev_state0 = curr_state;
+          break;
+        }
+        prev_state0 = curr_state;
+        
+        curr_state = digitalRead(BUTTON1);
+        if (prev_state1 == 1 && curr_state == 0) {
+          difficulty = 2;
+          prev_state1 = curr_state;
+          break;
+        }
+        prev_state1 = curr_state;
+
+        curr_state = digitalRead(BUTTON2);
+        if (prev_state2 == 1 && curr_state == 0) {
+          difficulty = 3;
+          prev_state2 = curr_state;
+          break;
+        }
+        prev_state2 = curr_state;
+        
       }
       break;
     }
@@ -233,19 +297,13 @@ void setup() {
       prev_state1 = curr_state;
 
       // initilize dodger
-      frog[0][0] = 154; // bottom left x
-      frog[0][1] = 210; // bottom left y
-      frog[1][0] = 162; // bottom right x
-      frog[1][1] = 210; // bottom right y
-      frog[2][0] = 158; // top x
-      frog[2][1] = 203; // top y
+      reset_frog();
 
       // initialize obstacles, obstacle size is 3
       for (int i = 0 ; i < obstacle_size ; i++) {
         obstacles[i][0] =  random(0, 300); // x
         obstacles[i][1] = random(0, 170); // y
-        obstacles[i][2] = random(5, 10); // length/width of box
-        Serial.printf("SETUP | obs x: %i, obs y: %i, obs size: %i\n", obstacles[i][0], obstacles[i][1], obstacles[i][2]);
+        obstacles[i][2] = random(10, 20); // length/width of box
       }
   
       break;
@@ -254,7 +312,7 @@ void setup() {
 
     curr_state = digitalRead(BUTTON2);
     if (prev_state2 == 1 && curr_state == 0) {
-      graphics.begin(0);
+      graphics.begin(BLACK);
       luni0.draw(graphics, 70, 65);
       luni0.draw(graphics, 210, 65);
       
@@ -263,16 +321,20 @@ void setup() {
       // snake option
       graphics.setCursor(136, 115);
       graphics.print("0   SNAKE");
+      graphics.setCursor(136, 125);
+      graphics.print("1   DODGER");
       
       graphics.end();
       delay(5000);
-      graphics.begin(0);
+      graphics.begin(BLACK);
       
       draw_logo();
     
       // snake option
       graphics.setCursor(136, 115);
       graphics.print("0   SNAKE");
+      graphics.setCursor(136, 125);
+      graphics.print("1   DODGER");
       
       graphics.end();
     }
@@ -331,9 +393,9 @@ void print_score() {
 }
 
 void game_over_screen() {
-  graphics.begin(0);
+  graphics.begin(BLACK);
   graphics.end();
-  graphics.begin(0);
+  graphics.begin(BLACK);
   graphics.setCursor(140, 92);
   graphics.print("GAME OVER");
   graphics.setCursor(138, 100);
@@ -379,31 +441,31 @@ void snake_game() {
   if (imu_direction != curr_direction) { // change direction
     curr_direction = imu_direction;
     if(imu_direction == 0) { // left
-      new_coord[0] = snake[0][0] - 1;
+      new_coord[0] = snake[0][0] - difficulty;
       new_coord[1] = snake[0][1]; 
     } else if (imu_direction == 1) { // down
       new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] + 1;
+      new_coord[1] = snake[0][1] + difficulty;
     } else if (imu_direction == 2) { // right
-      new_coord[0] = snake[0][0] + 1;
+      new_coord[0] = snake[0][0] + difficulty;
       new_coord[1] = snake[0][1];
     } else if (imu_direction == 3) { // up
       new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] - 1;
+      new_coord[1] = snake[0][1] - difficulty;
     }
   } else { // keep going in the current direction
     if (curr_direction == 0) { // left
-      new_coord[0] = snake[0][0] - 1;
+      new_coord[0] = snake[0][0] - difficulty;
       new_coord[1] = snake[0][1]; 
     } else if (curr_direction == 1) { // down
       new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] + 1;
+      new_coord[1] = snake[0][1] + difficulty;
     } else if (curr_direction == 2) { // right
-      new_coord[0] = snake[0][0] + 1;
+      new_coord[0] = snake[0][0] + difficulty;
       new_coord[1] = snake[0][1];
     } else if (curr_direction == 3) { // up
       new_coord[0] = snake[0][0];
-      new_coord[1] = snake[0][1] - 1;
+      new_coord[1] = snake[0][1] - difficulty;
     }
   }
 
@@ -451,17 +513,14 @@ void snake_game() {
   }
 }
 
-int frog_coord[75][2];
-
+// checks if the frog is contacting any obstacles
 bool is_gameover_dodger() {
-  for (int i = 0; i < obstacle_size ; i++) {
-    for (int j = 0 ; j < 3 ; j++) {
-      for (int x = 0; x < 5 ; x++) {
-        for (int y = 0; y < 5; y++) {
+  for (int i = 0; i < obstacle_size ; i++) { //  for each obstacle
+    for (int j = 0 ; j < 3 ; j++) { // for each frog
+      for (int x = 0; x < 5 ; x++) { // all coordinates in each frog
+        for (int y = 0; y < 5; y++) { // all coordinates in each frog
           if (frog[j][0] + x >= obstacles[i][0] && frog[j][0] + x <= obstacles[i][0] + obstacles[i][2]) { // if within the x bounds of an object
             if (frog[j][1] + y >= obstacles[i][1] && frog[j][1] + y <= obstacles[i][1] + obstacles[i][2]) { // if within the y bounds of an object
-              Serial.printf("top box xy: (%i-%i, %i-%i), left box xy: (%i-%i, %i-%i), right box: (%i-%i, %i-%i)\n", frog[2][0], frog[2][0]+4, frog[2][1], frog[2][1]+4, frog[0][0], frog[0][0]+4, frog[0][1], frog[0][1]+4, frog[1][0], frog[1][0]+4, frog[1][1], frog[1][1]+4);
-              Serial.printf("obstacle xy: (%i, %i), obstacle size: %i\n", obstacles[i][0], obstacles[i][1], obstacles[i][2]);
               return true;
             }
           } 
@@ -524,7 +583,23 @@ void dodger_game() {
     return;
   }
 
+  // check if the level has been complete
   if (level_completed()) {
+    // increase score
+    score += 10;
+    
+    // increase number of obstacles
+    for (int i = obstacle_size-1; i < obstacle_size+3; i++) {
+      obstacles[i][0] =  random(0, 300); // x
+      obstacles[i][1] = random(0, 170); // y
+      obstacles[i][2] = random(10, 20); // length/width of box
+    }
+    obstacle_size += 1;
+    
+    // put frog back at bottom
+    reset_frog();
+    curr_direction = 0;
+  
     
   }
   
@@ -533,40 +608,40 @@ void dodger_game() {
   if (imu_direction != curr_direction) {
     curr_direction = imu_direction;
     if(imu_direction == 0) { // left
-      frog[0][0] -= 1;
-      if (!border_check(frog[0])) {
-        frog[1][0] -= 1;
-        frog[2][0] -= 1; 
+      frog[0][0] -= 2;
+      if (!border_check(frog[0])) { // prevent leaving screen
+        frog[1][0] -= 2;
+        frog[2][0] -= 2; 
       }
       
     } else if (imu_direction == 2) { // right
-      frog[1][0] += 1;
-      if (!border_check(frog[1])) {
-        frog[0][0] += 1;
-        frog[2][0] += 1;
+      frog[1][0] += 2;
+      if (!border_check(frog[1])) { // prevent leaving screen
+        frog[0][0] += 2;
+        frog[2][0] += 2;
       }
     } else if (imu_direction == 3) { // up
-      frog[0][1] -= 1;
-      frog[1][1] -= 1;
-      frog[2][1] -= 1;
+      frog[0][1] -= 2;
+      frog[1][1] -= 2;
+      frog[2][1] -= 2;
     } else if (imu_direction == 1) { // down
-      frog[1][1] += 1;
-      if (!border_check(frog[1])) {
-        frog[0][1] += 1;
-        frog[2][1] += 1;
+      frog[1][1] += 2;
+      if (!border_check(frog[1])) { // prevent leaving screen
+        frog[0][1] += 2;
+        frog[2][1] += 2;
       }
       
     }
-  } else {
+  } else { // if the direction hasn't changed then continue the same direction
     if(curr_direction == 0) { // left
       frog[0][0] -= 1;
-      if (!border_check(frog[0])) {
+      if (!border_check(frog[0])) { // prevent leaving screen
         frog[1][0] -= 1;
         frog[2][0] -= 1; 
       }
     } else if (curr_direction == 2) { // right
       frog[1][0] += 1;
-      if (!border_check(frog[1])) {
+      if (!border_check(frog[1])) { // prevent leaving screen
         frog[0][0] += 1;
         frog[2][0] += 1;
       }
@@ -576,7 +651,7 @@ void dodger_game() {
       frog[2][1] -= 1;
     } else if (curr_direction == 1) { // down
       frog[1][1] += 1;
-      if (!border_check(frog[1])) {
+      if (!border_check(frog[1])) { // prevent leaving screen
         frog[0][1] += 1;
         frog[2][1] += 1;
       }
@@ -586,10 +661,7 @@ void dodger_game() {
   move_obstacles();
 }
 
-void loop() {
-  
-  // IMU
-
+void imu_collect_direction() {
   // if programming failed, don't try to do anything
     if (!dmpReady) return;
     // reset interrupt flag and get INT_STATUS byte
@@ -646,14 +718,22 @@ void loop() {
         blinkState = !blinkState;
         digitalWrite(LED_PIN, blinkState);
     }
+}
+
+void loop() {
+
+  // get the direction from the imu
+  imu_collect_direction();
+
+  
   // wipe lcd and begin writing to the lcd
-  graphics.begin(0);
-  if (button_pressed == 0) {
+  graphics.begin(BLACK);
+  
+  if (button_pressed == 0) { // if snake selected
     snake_game();
-  } else if(button_pressed == 1) {
+  } else if(button_pressed == 1) { // if dodger selected
     dodger_game();
   }
-  
-  
+   
   graphics.end();
 }
