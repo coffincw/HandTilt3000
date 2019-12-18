@@ -100,6 +100,16 @@ void draw_logo() {
   graphics.print("HAND TILT 3000");
 }
 
+void title_screen() {
+  draw_logo();
+    
+  // snake option
+  graphics.setCursor(136, 115);
+  graphics.print("0   SNAKE");
+  graphics.setCursor(136, 125);
+  graphics.print("1   DODGER");
+}
+
 int snake[300][2]; // snake coordinate array
 int obstacles[100][3]; // dodge obstactles coordinate array
 
@@ -233,13 +243,7 @@ void setup() {
   
   graphics.begin(BLACK);
   
-  draw_logo();
-
-  // snake option
-  graphics.setCursor(136, 115);
-  graphics.print("0   SNAKE");
-  graphics.setCursor(136, 125);
-  graphics.print("1   DODGER");
+  title_screen();
   
   graphics.end();
   while (1) {
@@ -316,25 +320,13 @@ void setup() {
       luni0.draw(graphics, 70, 65);
       luni0.draw(graphics, 210, 65);
       
-      draw_logo();
-    
-      // snake option
-      graphics.setCursor(136, 115);
-      graphics.print("0   SNAKE");
-      graphics.setCursor(136, 125);
-      graphics.print("1   DODGER");
+      title_screen();
       
       graphics.end();
       delay(5000);
       graphics.begin(BLACK);
       
-      draw_logo();
-    
-      // snake option
-      graphics.setCursor(136, 115);
-      graphics.print("0   SNAKE");
-      graphics.setCursor(136, 125);
-      graphics.print("1   DODGER");
+      title_screen();
       
       graphics.end();
     }
@@ -567,7 +559,11 @@ bool border_check(int coord[2]) {
   return false;
 }
 
+// main dodger game code
 void dodger_game() {
+  // display score
+  print_score();
+  
   // draw player
   for (int i = 0 ; i < 3 ; i++) {
     graphics.fillRect(frog[i][0], frog[i][1], 5, 5, WHITE);
@@ -634,26 +630,26 @@ void dodger_game() {
     }
   } else { // if the direction hasn't changed then continue the same direction
     if(curr_direction == 0) { // left
-      frog[0][0] -= 1;
+      frog[0][0] -= 2;
       if (!border_check(frog[0])) { // prevent leaving screen
-        frog[1][0] -= 1;
-        frog[2][0] -= 1; 
+        frog[1][0] -= 2;
+        frog[2][0] -= 2; 
       }
     } else if (curr_direction == 2) { // right
-      frog[1][0] += 1;
+      frog[1][0] += 2;
       if (!border_check(frog[1])) { // prevent leaving screen
-        frog[0][0] += 1;
-        frog[2][0] += 1;
+        frog[0][0] += 2;
+        frog[2][0] += 2;
       }
     } else if (curr_direction == 3) { // up
-      frog[0][1] -= 1;
-      frog[1][1] -= 1;
-      frog[2][1] -= 1;
+      frog[0][1] -= 2;
+      frog[1][1] -= 2;
+      frog[2][1] -= 2;
     } else if (curr_direction == 1) { // down
-      frog[1][1] += 1;
+      frog[1][1] += 2;
       if (!border_check(frog[1])) { // prevent leaving screen
-        frog[0][1] += 1;
-        frog[2][1] += 1;
+        frog[0][1] += 2;
+        frog[2][1] += 2;
       }
     }
   }
