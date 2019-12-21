@@ -20,8 +20,13 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
 - Glove (optional)
     - Needed to attach sensor to hand (can do with out simply by using rubber bands)
 
-<iframe width="560" height="315"
-src="https://www.youtube.com/embed/MUQfKFzIOeU" 
-frameborder="0" 
-allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
-allowfullscreen></iframe>
+## Pin Setup
+![ESP32 Wire Setup](https://i.imgur.com/IgPsVIW.jpg)
+
+## Demo
+
+### Snake
+![Snake](https://media.giphy.com/media/kdhyWBU2i6IGIFvB6X/giphy.gif)
+
+### Dodger
+![Dodger](https://media.giphy.com/media/cjQkGV6xxh7IvAjcMr/giphy.gif)
