@@ -19,15 +19,13 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
     - We took a regular AV video coord and split and soldered it ourselves
 - Glove (optional)
     - Needed to attach sensor to hand (can do with out simply by using rubber bands)
+- x5 Female to Male Wires
 
 ## Pin Setup
 ![ESP32 Wire Setup](https://i.imgur.com/IgPsVIW.jpg)
 
-## Demo
-
+## Game Demonstrations
 ### Snake
-
 ![Snake](https://github.com/coffincw/HandTilt3000/blob/master/snake-video.gif)
-
 ### Dodger
 ![Dodger](https://github.com/coffincw/HandTilt3000/blob/master/dodger-video.gif)
