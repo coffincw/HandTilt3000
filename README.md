@@ -1,6 +1,12 @@
 # Hand Tilt 3000
 Hand tilt controlled arcade gaming system powered by an Arduino ESP32. 
 
+## How to Run
+Simply connect the MPU sensor to the board according to the pin setup pictured below, connect the board to the LCD screen using two wires included in the pin set up, power up the chip, install the Electronic Cats MPU6050 library, and play!
+
+## Pin Setup
+![ESP32 Wire Setup](https://i.imgur.com/IgPsVIW.jpg)
+
 ## Games
 - Snake
     - Classic snake with three difficulty modes and border roll over modifications.
@@ -21,14 +27,6 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
     - Needed to attach sensor to hand (can do with out simply by using rubber bands)
 - x5 Female to Male Wires
 
-## Pin Setup
-![ESP32 Wire Setup](https://i.imgur.com/IgPsVIW.jpg)
-
-## How to Run
-Simply connect the MPU sensor to the board according to the above pin setup, connect the board to the LCD screen using two wires included in the pin set up, power up the chip, and go!
-
 ## Game Demonstrations
-### Snake
 ![Snake](https://github.com/coffincw/HandTilt3000/blob/master/snake-video.gif)
-### Dodger
-![Dodger](https://github.com/coffincw/HandTilt3000/blob/master/dodger-video.gif)
+<img src="https://github.com/coffincw/HandTilt3000/blob/master/dodger-video.gif" width="272" height="332" />
