@@ -27,9 +27,7 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
 
 ### Snake
 
-[![bdraw example](https://i.gyazo.com/c598fe1f391e75f0207dc392332cd622.gif)](https://gyazo.com/c598fe1f391e75f0207dc392332cd622)
-
-[![Snake from title](https://i.gyazo.com/a14dfd236731325f80e901a739c55017.gif)](https://gyazo.com/a14dfd236731325f80e901a739c55017)
+![Snake](https://media.giphy.com/media/kdhyWBU2i6IGIFvB6X/giphy.gif)
 
 ### Dodger
 ![Dodger](https://media.giphy.com/media/cjQkGV6xxh7IvAjcMr/giphy.gif)
