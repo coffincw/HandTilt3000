@@ -24,6 +24,9 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
 ## Pin Setup
 ![ESP32 Wire Setup](https://i.imgur.com/IgPsVIW.jpg)
 
+## How to Run
+Simply connect the MPU sensor to the board according to the above pin setup, connect the board to the LCD screen using two wires included in the pin set up, power up the chip, and go!
+
 ## Game Demonstrations
 ### Snake
 ![Snake](https://github.com/coffincw/HandTilt3000/blob/master/snake-video.gif)
