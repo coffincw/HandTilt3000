@@ -27,7 +27,7 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
 
 ### Snake
 
-![Snake](https://media.giphy.com/media/kdhyWBU2i6IGIFvB6X/giphy.gif)
+![Snake](https://github.com/coffincw/HandTilt3000/blob/master/snake-video.gif)
 
 ### Dodger
-![Dodger](https://media.giphy.com/media/cjQkGV6xxh7IvAjcMr/giphy.gif)
+![Dodger](https://github.com/coffincw/HandTilt3000/blob/master/dodger-video.gif)
