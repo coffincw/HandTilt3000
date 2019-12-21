@@ -26,6 +26,7 @@ Hand tilt controlled arcade gaming system powered by an Arduino ESP32.
 ## Demo
 
 ### Snake
+
 ![Snake](https://media.giphy.com/media/kdhyWBU2i6IGIFvB6X/giphy.gif)
 
 ### Dodger
