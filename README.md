@@ -1,6 +1,8 @@
 # Hand Tilt 3000
 Hand tilt controlled arcade gaming system powered by an Arduino ESP32. 
 
+Check out the [Project Website](https://sites.google.com/umass.edu/gaming-with-gesture/) for additional information
+
 ## How to Run
 Simply connect the MPU sensor to the board according to the pin setup pictured below, connect the board to the LCD screen using two wires included in the pin set up, power up the chip, install the Electronic Cats MPU6050 library, and play!
 
